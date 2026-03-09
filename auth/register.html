@@ -80,78 +80,92 @@
         </div>
     </div>
 
-    <script type="module">
-        const SUPABASE_URL = 'https://tfnvgsjfegrpsyuzthpn.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_W6IMM3hM_0UK69ZMgaRrfA_PWJfL9j8';
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<script type="module">
 
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            Swal.fire({ 
-                title: 'กำลังสร้างบัญชี...', 
-                background: '#1e293b',
-                color: '#fff',
-                allowOutsideClick: false, 
-                didOpen: () => Swal.showLoading() 
-            });
+if (typeof window._HYGIE_URL === 'undefined') {
+    // ใช้ค่า URL และ KEY ล่าสุดจากโปรเจกต์ของคุณ
+    window._HYGIE_URL = 'https://yqlbdwfcnffjuzjznrbi.supabase.co';
+    window._HYGIE_KEY = 'sb_publishable_JFvzaU8LuSa8KzL7o7Fmaw_J4oergY7';
+    window._client = window.supabase.createClient(window._HYGIE_URL, window._HYGIE_KEY);
+}
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const restaurantName = document.getElementById('restaurantName').value;
 
-            try {
-                // 1. ตรวจสอบอีเมลซ้ำในตาราง Users
-                const { data: existingUser } = await client
-                    .from('users')
-                    .select('email')
-                    .eq('email', email)
-                    .maybeSingle();
+document.getElementById('registerForm')
+.addEventListener('submit', async (e) => {
 
-                if (existingUser) throw new Error("อีเมลนี้ถูกใช้งานไปแล้ว");
+    e.preventDefault();
 
-                // 2. บันทึกข้อมูลลงตาราง Users
-                const { error: regError } = await client
-                    .from('users')
-                    .insert([{
-                        user_id: 'USR-' + Date.now(),
-                        email: email,
-                        password_hash: password,
-                        first_name: firstName,
-                        last_name: lastName,
-                        restaurant_name: restaurantName,
-                        role: 'user',
-                        payment_status: 'unpaid',
-                        created_at: new Date().toISOString()
-                    }]);
+    Swal.fire({
+        title: 'กำลังสร้างบัญชี...',
+        background: '#1e293b',
+        color: '#fff',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
 
-                if (regError) throw regError;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const firstName = document.getElementById('firstName').value;
+    const lastName = document.getElementById('lastName').value;
+    const restaurantName = document.getElementById('restaurantName').value;
 
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'สมัครสมาชิกสำเร็จ!',
-                    text: 'กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ',
-                    background: '#1e293b',
-                    color: '#fff',
-                    confirmButtonColor: '#00C3AA'
-                });
-                
-                window.location.href = 'login.html';
+    try {
 
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'ผิดพลาด',
-                    text: error.message,
-                    background: '#1e293b',
-                    color: '#fff',
-                    confirmButtonColor: '#ef4444'
-                });
-            }
+        // check duplicate email
+        const { data: existingUser } = await window._client
+            .from('users')
+            .select('email')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (existingUser) {
+            throw new Error("อีเมลนี้ถูกใช้งานแล้ว");
+        }
+
+        // insert user
+        const { error } = await window._client
+        .from('users')
+        .insert({
+            user_id: crypto.randomUUID(),
+            email: email,
+            password_hash: password,
+            first_name: firstName,
+            last_name: lastName,
+            restaurant_name: restaurantName,
+            role: 'user',
+            payment_status: 'unpaid'
         });
-    </script>
+
+        if (error) throw error;
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'สมัครสมาชิกสำเร็จ!',
+            text: 'กรุณาเข้าสู่ระบบ',
+            background: '#1e293b',
+            color: '#fff',
+            confirmButtonColor: '#00C3AA'
+        });
+
+        window.location.href = 'login.html';
+
+    } catch (error) {
+
+        Swal.fire({
+            icon: 'error',
+            title: 'ผิดพลาด',
+            text: error.message,
+            background: '#1e293b',
+            color: '#fff',
+            confirmButtonColor: '#ef4444'
+        });
+
+    }
+
+});
+
+</script>
 </body>
 
 </html>
+
