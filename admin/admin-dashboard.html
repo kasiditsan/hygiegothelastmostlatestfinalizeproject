@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HygieGo Admin - Management Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #0f172a; color: white; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .sidebar-item-active {
+            background: rgba(0, 195, 170, 0.1);
+            color: #00c3aa;
+            border-right: 4px solid #00c3aa;
+        }
+
+        /* Mobile Sidebar Toggle Overlay */
+        #sidebar-overlay { display: none; }
+        #sidebar-overlay.active { display: block; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen lg:flex">
+
+    <div class="lg:hidden bg-[#020617] text-white p-5 flex justify-between items-center sticky top-0 z-[60] border-b border-white/5">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-shield-alt text-[#00C3AA] text-2xl"></i>
+            <span class="font-bold text-xl tracking-tight">HygieGo Admin</span>
+        </div>
+        <button id="mobile-toggle" class="p-2.5 hover:bg-white/10 rounded-lg transition-all text-[#00C3AA]">
+            <i class="fas fa-bars text-2xl"></i>
+        </button>
+    </div>
+
+    <div id="sidebar-overlay" class="fixed inset-0 z-40 lg:hidden transition-opacity"></div>
+
+    <aside id="main-sidebar" class="fixed inset-y-0 left-0 w-80 bg-[#020617] border-r border-white/5 flex flex-col z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div class="p-10 border-b border-white/5">
+            <h1 class="text-3xl font-black tracking-tight text-white">Hygie<span class="text-[#00c3aa]">Go</span></h1>
+            <p class="text-xs text-[#00c3aa] font-black uppercase mt-2 tracking-[0.2em] italic">Administrator Panel</p>
+        </div>
+        
+        <nav class="flex-1 py-8">
+            <a href="#" class="flex items-center gap-5 px-10 py-5 sidebar-item-active transition-all">
+                <i class="fa-solid fa-chart-pie text-xl"></i>
+                <span class="text-base font-bold">ภาพรวมระบบ</span>
+            </a>
+            <a href="admin-task-detail.html" class="flex items-center gap-5 px-10 py-5 text-gray-400 hover:bg-white/5 transition-all">
+                <i class="fa-solid fa-users text-xl"></i>
+                <span class="text-base font-bold">จัดการผู้ใช้งาน</span>
+            </a>
+        </nav>
+
+        <div class="p-10 border-t border-white/5">
+            <button id="btnLogout" class="w-full py-5 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all text-sm font-black flex items-center justify-center gap-4">
+                <i class="fa-solid fa-power-off"></i> ออกจากระบบ
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 lg:ml-80 p-8 lg:p-12">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
+            <div>
+                <h2 class="text-4xl lg:text-5xl font-black text-white tracking-tight">ระบบจัดการงานตรวจ</h2>
+                <p class="text-gray-400 text-lg mt-3 font-medium">ยินดีต้อนรับคุณ <span id="adminName" class="font-black text-[#00c3aa]">...</span></p>
+            </div>
+            <div class="hidden md:flex items-center gap-6">
+                <div class="w-14 h-14 rounded-2xl glass-card flex items-center justify-center text-[#00c3aa] text-xl">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16 text-left">
+            <div class="glass-card p-10 rounded-[2.5rem] relative overflow-hidden group">
+                <p class="text-gray-500 text-xs font-black uppercase mb-4 tracking-[0.2em]">งานทั้งหมดในระบบ</p>
+                <h3 id="statTotal" class="text-6xl font-black text-white">0</h3>
+                <div class="absolute -right-4 -bottom-4 text-white/5 text-9xl rotate-12 group-hover:rotate-0 transition-transform">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+            </div>
+            <div class="glass-card p-10 rounded-[2.5rem] relative overflow-hidden group border-orange-500/10">
+                <p class="text-orange-500/50 text-xs font-black uppercase mb-4 tracking-[0.2em]">รอดำเนินการ</p>
+                <h3 id="statPending" class="text-6xl font-black text-orange-500">0</h3>
+                <div class="absolute -right-4 -bottom-4 text-orange-500/5 text-9xl rotate-12">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+            <div class="glass-card p-10 rounded-[2.5rem] relative overflow-hidden group border-[#00c3aa]/10 sm:col-span-2 lg:col-span-1">
+                <p class="text-[#00c3aa]/50 text-xs font-black uppercase mb-4 tracking-[0.2em]">ตรวจเสร็จสิ้น</p>
+                <h3 id="statDone" class="text-6xl font-black text-[#00c3aa]">0</h3>
+                <div class="absolute -right-4 -bottom-4 text-[#00c3aa]/5 text-9xl rotate-12">
+                    <i class="fa-solid fa-check-double"></i>
+                </div>
+            </div>
+        </div>
+
+        <section class="glass-card rounded-[3rem] overflow-hidden shadow-2xl">
+            <div class="p-10 lg:p-12 border-b border-white/5 flex flex-wrap justify-between items-center gap-8 text-left">
+                <h3 class="font-black text-white text-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-[#00c3aa]/10 flex items-center justify-center">
+                        <i class="fa-solid fa-list-check text-[#00c3aa] text-lg"></i>
+                    </div>
+                    รายการงานปัจจุบัน
+                </h3>
+                <div class="relative w-full md:w-96">
+                    <i class="fa-solid fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 text-base"></i>
+                    <input type="text" id="searchInput" placeholder="ค้นหาชื่อร้านอาหาร..." 
+                        class="w-full pl-14 pr-8 py-5 bg-white/5 border border-white/10 rounded-2xl text-base md:text-lg focus:ring-2 focus:ring-[#00c3aa] outline-none transition-all placeholder:text-gray-600">
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-white/[0.02] text-gray-500 text-xs font-black uppercase tracking-[0.2em]">
+                        <tr>
+                            <th class="px-10 py-8 min-w-[250px]">ร้านอาหาร / ID</th>
+                            <th class="px-10 py-8">สถานะงาน</th>
+                            <th class="px-10 py-8 text-center">วันที่ส่งคำขอ</th>
+                            <th class="px-10 py-8 text-right">การจัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskTableBody" class="divide-y divide-white/5">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        const SUPABASE_URL = 'https://yqlbdwfcnffjuzjznrbi.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_JFvzaU8LuSa8KzL7o7Fmaw_J4oergY7';
+        const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let allBookings = [];
+
+        // Hamburger Menu Logic
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const sidebar = document.getElementById('main-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('active');
+        }
+
+        mobileToggle.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        async function init() {
+            const savedUser = JSON.parse(localStorage.getItem('hygieUser'));
+            if (!savedUser || savedUser.role !== 'admin') {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+            document.getElementById('adminName').innerText = savedUser.first_name || 'Administrator';
+            await fetchTasks();
+        }
+
+        async function fetchTasks() {
+            try {
+                const { data, error } = await _client
+                    .from('booking')
+                    .select(`*, users (restaurant_name)`)
+                    .order('booking_id', { ascending: false });
+
+                if (error) throw error;
+                
+                allBookings = data;
+                updateStats(data);
+                renderTable(data);
+            } catch (err) { 
+                console.error("Fetch Tasks Error:", err.message);
+                Swal.fire('Database Error', err.message, 'error');
+            }
+        }
+
+        function updateStats(bookings) {
+            document.getElementById('statTotal').innerText = bookings.length;
+            document.getElementById('statPending').innerText = bookings.filter(b => b.status !== 'Completed').length;
+            document.getElementById('statDone').innerText = bookings.filter(b => b.status === 'Completed').length;
+        }
+
+        function renderTable(bookings) {
+            const tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = '';
+
+            if (bookings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-32 text-center text-gray-500 text-xl font-medium">ไม่พบรายการข้อมูลงานตรวจ</td></tr>`;
+                return;
+            }
+
+            bookings.forEach(task => {
+                const shopName = task.users?.restaurant_name || 'ไม่ทราบชื่อร้าน';
+                const statusClass = task.status === 'Completed' 
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                    : 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-white/[0.03] transition-all group">
+                        <td class="px-10 py-9">
+                            <p class="text-xl font-black text-gray-100 group-hover:text-[#00c3aa] transition-colors">${shopName}</p>
+                            <p class="text-xs font-mono text-gray-500 mt-2 uppercase tracking-widest">JOB ID: ${task.booking_id}</p>
+                        </td>
+                        <td class="px-10 py-9">
+                            <span class="px-5 py-2.5 rounded-xl border text-xs font-black uppercase tracking-widest ${statusClass}">${task.status}</span>
+                        </td>
+                        <td class="px-10 py-9 text-gray-400 text-base text-center font-bold">${task.booking_date || '-'}</td>
+                        <td class="px-10 py-9 text-right">
+                            <div class="flex justify-end gap-4">
+                                <button onclick="location.href='admin-task-detail.html?id=${task.booking_id}'" class="w-14 h-14 rounded-xl bg-white/5 text-gray-400 hover:bg-[#00c3aa] hover:text-[#0f172a] transition-all flex items-center justify-center text-lg shadow-lg">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="window.deleteTask('${task.booking_id}')" class="w-14 h-14 rounded-xl bg-red-500/5 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-lg shadow-lg">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        window.deleteTask = async (id) => {
+            const res = await Swal.fire({
+                title: 'ยืนยันการลบงาน?',
+                text: 'การลบข้อมูลนี้อาจส่งผลต่อประวัติของลูกค้า คุณแน่ใจหรือไม่?',
+                icon: 'warning',
+                background: '#1e293b',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'ใช่, ลบเลย',
+                cancelButtonText: 'ยกเลิก'
+            });
+
+            if (res.isConfirmed) {
+                const { error } = await _client.from('booking').delete().eq('booking_id', id);
+                if (error) Swal.fire('Error', error.message, 'error');
+                else {
+                    Swal.fire({ title: 'ลบสำเร็จ', icon: 'success', timer: 1000, showConfirmButton: false });
+                    fetchTasks();
+                }
+            }
+        };
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allBookings.filter(b => 
+                (b.users?.restaurant_name || '').toLowerCase().includes(val) ||
+                String(b.booking_id).includes(val)
+            );
+            renderTable(filtered);
+        });
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '../auth/login.html';
+        });
+
+        init();
+    </script>
+</body>
+</html>

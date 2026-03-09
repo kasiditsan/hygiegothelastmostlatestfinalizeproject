@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลงทะเบียนผู้ใช้งาน - HygieGo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #0b1120; }
+        .register-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+    <div class="register-card p-10 md:p-14 rounded-[2.5rem] w-full max-w-xl shadow-2xl transition-all">
+        <div class="text-center mb-10">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <i class="fas fa-shield-alt text-[#00C3AA] text-4xl"></i>
+                <h1 class="text-4xl font-black text-white tracking-tight">สมัครสมาชิก</h1>
+            </div>
+            <p class="text-gray-400 text-lg">เริ่มต้นจัดการมาตรฐานร้านค้าของคุณกับ HygieGo</p>
+        </div>
+        
+        <form id="registerForm" class="space-y-6 text-left">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-base font-bold text-gray-300 mb-3 tracking-wide">ชื่อจริง</label>
+                    <input type="text" id="firstName" required placeholder="ชื่อ" 
+                        class="w-full px-5 py-4 rounded-2xl bg-[#0f172a] border border-gray-700 text-white text-lg focus:border-[#00C3AA] focus:ring-2 focus:ring-[#00C3AA]/20 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-base font-bold text-gray-300 mb-3 tracking-wide">นามสกุล</label>
+                    <input type="text" id="lastName" required placeholder="นามสกุล" 
+                        class="w-full px-5 py-4 rounded-2xl bg-[#0f172a] border border-gray-700 text-white text-lg focus:border-[#00C3AA] focus:ring-2 focus:ring-[#00C3AA]/20 outline-none transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-base font-bold text-gray-300 mb-3 tracking-wide">ชื่อร้านอาหาร / สถานประกอบการ</label>
+                <div class="relative">
+                    <i class="fa-solid fa-store absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-lg"></i>
+                    <input type="text" id="restaurantName" required placeholder="ระบุชื่อร้านของคุณ" 
+                        class="w-full pl-14 pr-6 py-4 rounded-2xl bg-[#0f172a] border border-gray-700 text-white text-lg focus:border-[#00C3AA] focus:ring-2 focus:ring-[#00C3AA]/20 outline-none transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-base font-bold text-gray-300 mb-3 tracking-wide">อีเมล</label>
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-lg"></i>
+                    <input type="email" id="email" required placeholder="example@mail.com" 
+                        class="w-full pl-14 pr-6 py-4 rounded-2xl bg-[#0f172a] border border-gray-700 text-white text-lg focus:border-[#00C3AA] focus:ring-2 focus:ring-[#00C3AA]/20 outline-none transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-base font-bold text-gray-300 mb-3 tracking-wide">รหัสผ่าน</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-lg"></i>
+                    <input type="password" id="password" required placeholder="อย่างน้อย 6 ตัวอักษร" 
+                        class="w-full pl-14 pr-6 py-4 rounded-2xl bg-[#0f172a] border border-gray-700 text-white text-lg focus:border-[#00C3AA] focus:ring-2 focus:ring-[#00C3AA]/20 outline-none transition-all">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-[#00C3AA] text-[#0f172a] py-5 rounded-2xl font-black text-xl hover:bg-[#00a892] hover:shadow-[0_0_30px_rgba(0,195,170,0.3)] transition-all active:scale-[0.97] mt-6">
+                ยืนยันการสมัครสมาชิก
+            </button>
+        </form>
+
+        <div class="mt-10 text-center text-base md:text-lg text-gray-500">
+            มีบัญชีอยู่แล้ว? <a href="login.html" class="text-[#00C3AA] font-black hover:underline ml-1">เข้าสู่ระบบ</a>
+        </div>
+    </div>
+
+    <script type="module">
+        const SUPABASE_URL = 'https://tfnvgsjfegrpsyuzthpn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_W6IMM3hM_0UK69ZMgaRrfA_PWJfL9j8';
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            Swal.fire({ 
+                title: 'กำลังสร้างบัญชี...', 
+                background: '#1e293b',
+                color: '#fff',
+                allowOutsideClick: false, 
+                didOpen: () => Swal.showLoading() 
+            });
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const restaurantName = document.getElementById('restaurantName').value;
+
+            try {
+                // 1. ตรวจสอบอีเมลซ้ำในตาราง Users
+                const { data: existingUser } = await client
+                    .from('Users')
+                    .select('email')
+                    .eq('email', email)
+                    .maybeSingle();
+
+                if (existingUser) throw new Error("อีเมลนี้ถูกใช้งานไปแล้ว");
+
+                // 2. บันทึกข้อมูลลงตาราง Users
+                const { error: regError } = await client
+                    .from('Users')
+                    .insert([{
+                        user_id: 'USR-' + Date.now(),
+                        email: email,
+                        password_hash: password,
+                        first_name: firstName,
+                        last_name: lastName,
+                        restaurant_name: restaurantName,
+                        role: 'user',
+                        payment_status: 'unpaid',
+                        created_at: new Date().toISOString()
+                    }]);
+
+                if (regError) throw regError;
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'สมัครสมาชิกสำเร็จ!',
+                    text: 'กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ',
+                    background: '#1e293b',
+                    color: '#fff',
+                    confirmButtonColor: '#00C3AA'
+                });
+                
+                window.location.href = 'login.html';
+
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ผิดพลาด',
+                    text: error.message,
+                    background: '#1e293b',
+                    color: '#fff',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        });
+    </script>
+</body>
+</html>

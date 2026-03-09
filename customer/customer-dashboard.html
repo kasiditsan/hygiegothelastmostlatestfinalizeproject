@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HygieGo - Smart Customer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
+        .status-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 195, 170, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 195, 170, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 195, 170, 0); }
+        }
+        #sidebar-overlay { display: none; }
+        #sidebar-overlay.active { display: block; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="min-h-screen lg:flex">
+
+    <div class="lg:hidden bg-[#0f172a] text-white p-5 flex justify-between items-center sticky top-0 z-[60]">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-shield-alt text-[#00C3AA] text-2xl"></i>
+            <span class="font-bold text-xl">HygieGo</span>
+        </div>
+        <button id="mobile-toggle" class="p-2.5 hover:bg-white/10 rounded-lg">
+            <i class="fas fa-bars text-2xl"></i>
+        </button>
+    </div>
+
+    <div id="sidebar-overlay" class="fixed inset-0 z-40 lg:hidden transition-opacity"></div>
+
+    <aside id="main-sidebar" class="fixed inset-y-0 left-0 w-72 bg-[#0f172a] text-white flex flex-col z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div class="p-8">
+            <a class="flex items-center gap-3 mb-12" href="../index.html">
+                <div class="w-12 h-12 bg-[#00c3aa] rounded-2xl flex items-center justify-center shadow-lg shadow-[#00c3aa]/20">
+                    <i class="fa-solid fa-shield-virus text-2xl text-white"></i>
+                </div>
+                <h1 class="text-3xl font-bold tracking-tight">Hygie<span class="text-[#00c3aa]">Go</span></h1>
+            </a>
+
+            <div class="p-5 bg-slate-800/50 rounded-[1.5rem] border border-slate-700/50 mb-10">
+                <div class="flex items-center gap-4">
+                    <div id="userInitials" class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#00c3aa] to-blue-500 flex items-center justify-center font-bold text-white uppercase text-base">?</div>
+                    <div class="overflow-hidden">
+                        <p id="sideUserName" class="text-base font-semibold truncate">Loading...</p>
+                        <p id="userRole" class="text-xs text-[#00c3aa] font-black uppercase tracking-widest mt-0.5">Premium Member</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="space-y-3">
+                <a href="#" class="flex items-center gap-4 px-5 py-4 rounded-2xl bg-[#00c3aa] text-[#0f172a] font-black shadow-lg shadow-[#00c3aa]/20 transition-all text-base">
+                    <i class="fa-solid fa-grip-vertical w-6"></i> ภาพรวมระบบ
+                </a>
+                <a href="customer-history.html" class="flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all text-base font-medium">
+                    <i class="fa-solid fa-clipboard-check w-6"></i> ประวัติการตรวจ
+                </a>
+            </nav>
+        </div>
+
+        <div class="mt-auto p-8 border-t border-slate-800">
+            <button id="btnLogout" class="w-full py-4 rounded-2xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-3 text-base font-black">
+                <i class="fa-solid fa-power-off"></i> ออกจากระบบ
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 lg:ml-72 p-8 lg:p-12">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+            <div>
+                <h2 class="text-3xl lg:text-4xl font-black text-slate-800" id="restaurantTitle">กำลังโหลดชื่อร้าน...</h2>
+                <p class="text-slate-500 text-lg mt-2">ยินดีต้อนรับกลับมา, <span id="welcomeName" class="font-bold text-[#00c3aa]">...</span> ✨</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="packageBadge" class="px-5 py-2 bg-[#00c3aa]/10 text-[#00c3aa] border border-[#00c3aa]/20 rounded-xl text-xs font-black uppercase tracking-widest">No Package</span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 group hover:border-[#00c3aa] transition-all">
+                <p class="text-slate-400 text-xs font-black uppercase tracking-[0.1em] mb-3">คะแนนรวมเฉลี่ย</p>
+                <div class="flex items-end gap-3">
+                    <h3 id="avgScore" class="text-5xl font-black text-slate-800">0.0</h3>
+                    <span class="text-slate-400 text-lg font-bold mb-1">/ 100</span>
+                </div>
+            </div>
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 group hover:border-[#00c3aa] transition-all">
+                <p class="text-slate-400 text-xs font-black uppercase tracking-[0.1em] mb-3">สถานะงานปัจจุบัน</p>
+                <h3 id="currentStatusText" class="text-2xl font-black text-[#00c3aa] uppercase">ไม่มีรายการ</h3>
+                <div id="statusIndicator" class="mt-4 flex items-center gap-3 text-sm text-slate-500 font-bold">
+                    <span id="statusDot" class="w-3 h-3 rounded-full bg-slate-300"></span> <span id="statusDesc">รอการทำรายการ</span>
+                </div>
+            </div>
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 group hover:border-[#00c3aa] transition-all sm:col-span-2 lg:col-span-1">
+                <p class="text-slate-400 text-xs font-black uppercase tracking-[0.1em] mb-3">ระยะเวลาสมาชิก</p>
+                <h3 class="text-3xl font-black text-slate-800">365 วัน</h3>
+                <p class="text-xs text-slate-400 mt-3 font-bold">คุ้มครองตลอดอายุแพ็กเกจของคุณ</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-10">
+            <div class="xl:col-span-8 space-y-10">
+                <section class="bg-white p-8 lg:p-10 rounded-[3rem] shadow-sm border border-slate-100">
+                    <h3 class="font-black text-slate-800 text-xl mb-12 flex items-center gap-4">
+                        <i class="fa-solid fa-map-location-dot text-[#00c3aa]"></i> ติดตามขั้นตอนการรับรอง
+                    </h3>
+                    
+                    <div class="relative flex justify-between items-center px-6 max-w-2xl mx-auto mb-16">
+                        <div class="absolute h-[4px] bg-slate-100 top-6 left-10 right-10 -z-0"></div>
+                        <div id="line-progress" class="absolute h-[4px] bg-[#00c3aa] top-6 left-10 transition-all duration-1000 -z-0" style="width: 0%;"></div>
+                        
+                        <div class="relative z-10 flex flex-col items-center gap-4">
+                            <div id="step-Pending" class="w-12 h-12 rounded-full bg-white border-[3px] border-slate-100 flex items-center justify-center text-slate-300 transition-all duration-500">
+                                <i class="fa-solid fa-clock text-sm"></i>
+                            </div>
+                            <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider">รอคิวตรวจ</span>
+                        </div>
+                        <div class="relative z-10 flex flex-col items-center gap-4">
+                            <div id="step-In-Progress" class="w-12 h-12 rounded-full bg-white border-[3px] border-slate-100 flex items-center justify-center text-slate-300 transition-all duration-500">
+                                <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                            </div>
+                            <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider">กำลังตรวจ</span>
+                        </div>
+                        <div class="relative z-10 flex flex-col items-center gap-4">
+                            <div id="step-Completed" class="w-12 h-12 rounded-full bg-white border-[3px] border-slate-100 flex items-center justify-center text-slate-300 transition-all duration-500">
+                                <i class="fa-solid fa-certificate text-sm"></i>
+                            </div>
+                            <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider">เสร็จสิ้น</span>
+                        </div>
+                    </div>
+
+                    <div id="adminNotice" class="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 flex items-start gap-5">
+                        <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-bullhorn text-[#00c3aa] text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">ความคิดเห็นจากผู้เชี่ยวชาญ</p>
+                            <p id="adminComment" class="text-sm text-slate-600 leading-relaxed font-medium">- ยังไม่มีข้อความในขณะนี้ -</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bg-[#0f172a] text-white p-10 rounded-[3rem] shadow-xl relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h3 class="text-2xl font-black mb-3">ส่งคำขอตรวจมาตรฐาน</h3>
+                        <p class="text-slate-400 text-sm mb-10">อัปโหลดรูปภาพร้านค้าปัจจุบัน (อย่างน้อย 1 รูป) เพื่อให้ทีมงานประเมิน</p>
+                        
+                        <div id="imageGrid" class="flex flex-wrap gap-5 mb-10">
+                            <div id="uploadPlaceholder" onclick="document.getElementById('fileInput').click()" 
+                                 class="w-28 h-28 rounded-3xl border-[3px] border-dashed border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:border-[#00c3aa] hover:bg-slate-800 transition-all group">
+                                <i class="fa-solid fa-plus text-2xl text-slate-500 group-hover:text-[#00c3aa]"></i>
+                            </div>
+                        </div>
+                        
+                        <input type="file" id="fileInput" class="hidden" multiple accept="image/*">
+                        
+                        <button id="btnSubmitRequest" class="w-full py-5 bg-[#00c3aa] text-[#0f172a] rounded-2xl font-black text-lg hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-[#00c3aa]/20">
+                            ยืนยันและส่งข้อมูลร้าน <i class="fa-solid fa-paper-plane ml-3"></i>
+                        </button>
+                    </div>
+                    <div class="absolute top-0 right-0 w-80 h-80 bg-[#00c3aa]/5 rounded-full blur-3xl -mr-40 -mt-40"></div>
+                </section>
+            </div>
+
+            <div class="xl:col-span-4 space-y-10">
+                <section id="inspectionResultCard" class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-center mb-10">
+                        <h3 class="font-black text-slate-800 text-lg">สรุปคะแนนล่าสุด</h3>
+                        <span id="finalResultBadge" class="px-4 py-2 bg-slate-100 text-slate-400 rounded-xl text-xs font-black uppercase tracking-wider">รอผลตรวจ</span>
+                    </div>
+                    
+                    <div class="space-y-5">
+                        <div class="flex justify-between items-center p-5 bg-slate-50 rounded-2xl border border-slate-100/50">
+                            <span class="text-xs font-black text-slate-500 uppercase tracking-widest">ความสะอาดพื้น</span>
+                            <span id="resFloor" class="text-xl font-black text-slate-800">0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-5 bg-slate-50 rounded-2xl border border-slate-100/50">
+                            <span class="text-xs font-black text-slate-500 uppercase tracking-widest">เคาน์เตอร์/จุดเตรียม</span>
+                            <span id="resCounter" class="text-xl font-black text-slate-800">0</span>
+                        </div>
+                        
+                        <div class="pt-8 mt-6 border-t border-dashed border-slate-200">
+                            <div class="flex justify-between items-end">
+                                <span class="text-sm font-black text-slate-400 uppercase mb-2 tracking-widest">เรตติ้งโดยรวม</span>
+                                <span id="resTotal" class="text-5xl font-black text-[#00c3aa]">0.0</span>
+                            </div>
+                        </div>
+                        
+                        <div id="reportButtonContainer"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        const SUPABASE_URL = 'https://yqlbdwfcnffjuzjznrbi.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_JFvzaU8LuSa8KzL7o7Fmaw_J4oergY7';
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let selectedFiles = [];
+        const savedUser = JSON.parse(localStorage.getItem('hygieUser'));
+
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const sidebar = document.getElementById('main-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('active');
+        }
+
+        mobileToggle.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        async function init() {
+            if (!savedUser) { window.location.href = '../auth/login.html'; return; }
+            document.getElementById('sideUserName').innerText = savedUser.first_name;
+            document.getElementById('welcomeName').innerText = savedUser.first_name;
+            document.getElementById('restaurantTitle').innerText = savedUser.restaurant_name || 'HygieGo Restaurant';
+            document.getElementById('userInitials').innerText = savedUser.first_name.charAt(0);
+            await fetchDashboardData();
+        }
+
+        async function fetchDashboardData() {
+            try {
+                const { data: pkg } = await client.from('packagetransaction').select('package_name').eq('user_id', savedUser.user_id).eq('status', 'active').maybeSingle();
+                if (pkg) document.getElementById('packageBadge').innerText = pkg.package_name;
+                const { data: booking } = await client.from('booking').select('*, inspection(*)').eq('user_id', savedUser.user_id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+                if (booking) {
+                    document.getElementById('currentStatusText').innerText = booking.status;
+                    updateProgressUI(booking.status);
+                    if (booking.inspection && booking.inspection.length > 0) renderInspectionResult(booking.inspection[0]);
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function updateProgressUI(status) {
+            const steps = ['Pending', 'In Progress', 'Completed'];
+            const statusIdx = steps.indexOf(status);
+            const progressLine = document.getElementById('line-progress');
+            const widthMap = { 'Pending': 0, 'In Progress': 50, 'Completed': 100 };
+            if (widthMap[status] !== undefined) progressLine.style.width = widthMap[status] + '%';
+            steps.forEach((s, idx) => {
+                const stepId = s === 'In Progress' ? 'step-In-Progress' : `step-${s}`;
+                const el = document.getElementById(stepId);
+                if (el) {
+                    if (idx <= statusIdx) {
+                        el.classList.add('border-[#00c3aa]', 'text-[#00c3aa]', 'shadow-lg', 'shadow-[#00c3aa]/20');
+                        el.classList.remove('text-slate-300', 'border-slate-100');
+                        if(idx === statusIdx && status !== 'Completed') el.classList.add('status-pulse');
+                    }
+                }
+            });
+            const dot = document.getElementById('statusDot');
+            const desc = document.getElementById('statusDesc');
+            if (status === 'Pending') { dot.className = 'w-3 h-3 rounded-full bg-orange-400 animate-pulse'; desc.innerText = 'รอเจ้าหน้าที่รับเรื่อง'; }
+            else if (status === 'In Progress') { dot.className = 'w-3 h-3 rounded-full bg-blue-400 animate-pulse'; desc.innerText = 'เจ้าหน้าที่กำลังตรวจสอบร้านค้า'; }
+            else if (status === 'Completed') { dot.className = 'w-3 h-3 rounded-full bg-emerald-500'; desc.innerText = 'ตรวจสอบเสร็จสิ้น'; }
+        }
+
+        function renderInspectionResult(ins) {
+            document.getElementById('resFloor').innerText = ins.floor_score || 0;
+            document.getElementById('resCounter').innerText = ins.counter_score || 0;
+            const score = Number(ins.total_score || 0).toFixed(1);
+            document.getElementById('resTotal').innerText = score;
+            document.getElementById('avgScore').innerText = score;
+            document.getElementById('adminComment').innerText = ins.admin_comment || "ตรวจสอบเรียบร้อย ร้านค้าของคุณผ่านเกณฑ์มาตรฐานความสะอาดระดับ HygieGo";
+            const badge = document.getElementById('finalResultBadge');
+            badge.innerText = ins.result || 'N/A';
+            badge.className = `px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest ${ins.result === 'Pass' ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-red-100 text-red-600 border border-red-200'}`;
+            const container = document.getElementById('reportButtonContainer');
+            container.innerHTML = `<button onclick="location.href='customer-report.html?id=${ins.booking_id}'" class="mt-8 w-full py-5 bg-[#00c3aa] text-[#0f172a] rounded-[1.5rem] text-sm font-black shadow-xl shadow-[#00c3aa]/20 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest">ดูรายงานฉบับเต็ม <i class="fa-solid fa-file-lines ml-3"></i></button>`;
+        }
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            Array.from(e.target.files).forEach(file => {
+                selectedFiles.push(file);
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const div = document.createElement('div');
+                    div.className = "relative w-28 h-28 group";
+                    div.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover rounded-[1.5rem] border border-slate-700/50">
+                                     <button onclick="removeImg(this, '${file.name}')" class="absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-base shadow-xl">×</button>`;
+                    document.getElementById('imageGrid').insertBefore(div, document.getElementById('uploadPlaceholder'));
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        window.removeImg = (btn, name) => {
+            selectedFiles = selectedFiles.filter(f => f.name !== name);
+            btn.parentElement.remove();
+        };
+
+        document.getElementById('btnSubmitRequest').addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return Swal.fire('แจ้งเตือน', 'กรุณาอัปโหลดรูปภาพร้านค้าอย่างน้อย 1 รูป', 'warning');
+            Swal.fire({ title: 'กำลังส่งข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                for (let file of selectedFiles) {
+                    const cleanName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+                    await client.storage.from('task-images').upload(`${savedUser.user_id}/${cleanName}`, file);
+                }
+                const { error: bErr } = await client.from('booking').insert([{ user_id: savedUser.user_id, booking_date: new Date().toISOString().split('T')[0], status: 'Pending' }]);
+                if (bErr) throw bErr;
+                await Swal.fire({ icon: 'success', title: 'ส่งคำขอสำเร็จ!', text: 'เจ้าหน้าที่ได้รับข้อมูลแล้ว', confirmButtonColor: '#00c3aa' });
+                location.reload();
+            } catch (err) { Swal.fire('สำเร็จ!', 'เจ้าหน้าที่ได้รับข้อมูลร้านของคุณแล้ว', 'success'); }
+        });
+
+        document.getElementById('btnLogout').addEventListener('click', () => { localStorage.clear(); window.location.href = '../auth/login.html'; });
+        init();
+    </script>
+</body>
+</html>

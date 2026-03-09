@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - HygieGo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #0b1120; }
+        .login-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+    <div class="login-card p-10 md:p-14 rounded-[2.5rem] w-full max-w-lg shadow-2xl transition-all">
+        <div class="text-center mb-12">
+            <a href="../index.html" class="flex items-center justify-center gap-3 mb-4">
+                <i class="fas fa-shield-alt text-[#00C3AA] text-4xl"></i>
+                <div  class="text-4xl font-black text-white tracking-tight">HygieGo</div>
+            </a>
+            <p class="text-gray-400 text-lg">กรุณาลงชื่อเข้าใช้งานเพื่อจัดการระบบของคุณ</p>
+        </div>
+        
+        <form id="loginForm" class="space-y-8 text-left">
+            <div>
+                <label class="block text-base font-bold text-gray-300 mb-3 tracking-wide">อีเมลผู้ใช้งาน</label>
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-lg"></i>
+                    <input type="email" id="email" required placeholder="example@mail.com" 
+                        class="w-full pl-14 pr-6 py-4 rounded-2xl bg-[#0f172a] border border-gray-700 text-white text-lg focus:border-[#00C3AA] focus:ring-2 focus:ring-[#00C3AA]/20 outline-none transition-all placeholder:text-gray-600">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-base font-bold text-gray-300 mb-3 tracking-wide">รหัสผ่าน</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-lg"></i>
+                    <input type="password" id="password" required placeholder="••••••••" 
+                        class="w-full pl-14 pr-6 py-4 rounded-2xl bg-[#0f172a] border border-gray-700 text-white text-lg focus:border-[#00C3AA] focus:ring-2 focus:ring-[#00C3AA]/20 outline-none transition-all placeholder:text-gray-600">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between text-sm md:text-base text-gray-400">
+                <label class="flex items-center gap-3 cursor-pointer hover:text-gray-200 transition">
+                    <input type="checkbox" class="w-5 h-5 rounded accent-[#00C3AA]"> จดจำฉันไว้
+                </label>
+                <a href="#" class="hover:text-[#00C3AA] font-medium transition">ลืมรหัสผ่าน?</a>
+            </div>
+
+            <button type="submit" class="w-full bg-[#00C3AA] text-[#0f172a] py-5 rounded-2xl font-black text-xl hover:bg-[#00a892] hover:shadow-[0_0_30px_rgba(0,195,170,0.3)] transition-all active:scale-[0.97] mt-4">
+                เข้าสู่ระบบ
+            </button>
+        </form>
+
+        <div class="mt-10 text-center text-base md:text-lg text-gray-500">
+            ยังไม่มีบัญชี? <a href="register.html" class="text-[#00C3AA] font-black hover:underline ml-1">ลงทะเบียนฟรี</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import db from '../js/DB.js';
+
+        db.init();
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            Swal.fire({ 
+                title: 'กำลังตรวจสอบข้อมูล...', 
+                background: '#1e293b',
+                color: '#fff',
+                allowOutsideClick: false, 
+                didOpen: () => Swal.showLoading() 
+            });
+
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+
+            const res = await db.login(email, pass);
+
+            if (res.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'สำเร็จ!',
+                    text: 'ยินดีต้อนรับกลับเข้าสู่ระบบ',
+                    background: '#1e293b',
+                    color: '#fff',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    const user = res.user;
+                    const role = res.role;
+
+                    if (role === 'admin') {
+                        window.location.href = '../admin/admin-dashboard.html';
+                    } else {
+                        if (user.payment_status !== 'paid') {
+                            window.location.href = '../pricing.html';
+                        } else {
+                            window.location.href = '../customer/customer-dashboard.html';
+                        }
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เข้าสู่ระบบไม่สำเร็จ',
+                    text: res.msg,
+                    background: '#1e293b',
+                    color: '#fff',
+                    confirmButtonColor: '#00C3AA'
+                });
+            }
+        });
+    </script>
+</body>
+</html>
