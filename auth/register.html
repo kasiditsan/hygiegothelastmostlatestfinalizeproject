@@ -105,7 +105,7 @@
             try {
                 // 1. ตรวจสอบอีเมลซ้ำในตาราง Users
                 const { data: existingUser } = await client
-                    .from('Users')
+                    .from('users')
                     .select('email')
                     .eq('email', email)
                     .maybeSingle();
@@ -114,7 +114,7 @@
 
                 // 2. บันทึกข้อมูลลงตาราง Users
                 const { error: regError } = await client
-                    .from('Users')
+                    .from('users')
                     .insert([{
                         user_id: 'USR-' + Date.now(),
                         email: email,
@@ -153,4 +153,5 @@
         });
     </script>
 </body>
+
 </html>
