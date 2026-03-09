@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HygieGo - เพื่อนคู่คิด มาตรฐานร้านอาหาร Street Food</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(0, 195, 170, 0.15), transparent),
+                        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.1), transparent);
+        }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-white selection:bg-[#00C3AA]/30">
+
+    <nav class="fixed w-full z-50 bg-[#0f172a]/90 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center gap-4">
+            
+            <div class="flex items-center gap-3">
+                <button id="menu-toggle" class="md:hidden text-white text-2xl focus:outline-none p-2 hover:bg-white/5 rounded-lg transition">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <i class="fas fa-shield-alt text-[#00C3AA] text-xl md:text-3xl"></i>
+                    <span class="text-xl md:text-3xl font-bold bg-gradient-to-r from-[#00C3AA] to-blue-500 bg-clip-text text-transparent">
+                        HygieGo
+                    </span>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8 text-base font-medium text-gray-400">
+                <a href="indexnew.html" class="hover:text-[#00C3AA] transition whitespace-nowrap">หน้าหลัก</a>
+                <a href="portfolio.html" class="hover:text-[#00C3AA] transition whitespace-nowrap">ผลงาน</a>
+                <a href="pricing.html" class="hover:text-[#00C3AA] transition whitespace-nowrap">ราคา</a>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+                <div id="auth-guest" class="flex items-center gap-4">
+                    <a href="auth/login.html" class="text-sm md:text-base font-semibold hover:text-[#00C3AA] transition px-2">เข้าสู่ระบบ</a>
+                    <a href="auth/register.html" class="bg-[#00C3AA] text-white px-4 py-2.5 md:px-8 md:py-3 rounded-full font-bold text-sm md:text-base whitespace-nowrap shadow-lg shadow-[#00C3AA]/20">เริ่มใช้งาน</a>
+                </div>
+
+                <div id="auth-user" class="hidden flex items-center gap-3">
+                    <div class="flex items-center gap-3 bg-white/5 px-3 py-2 md:px-5 md:py-2.5 rounded-2xl border border-white/10">
+                        <div id="user-avatar" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-[#00C3AA] to-blue-500 flex items-center justify-center text-[#0f172a] font-bold text-xs md:text-sm"></div>
+                        <span id="display-user-name" class="hidden sm:inline text-xs md:text-sm font-bold text-gray-200"></span>
+                    </div>
+                    <a id="dashboard-link" href="#" class="bg-white/5 hover:bg-[#00C3AA] hover:text-[#0f172a] text-[#00C3AA] border border-[#00C3AA]/30 px-4 py-2 md:px-6 md:py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-2">
+                        Dashboard <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden absolute top-20 left-0 w-full bg-[#1e293b] border-b border-white/10 flex-col p-8 gap-6 md:hidden shadow-2xl text-lg">
+            <a href="index.html" class="text-gray-200 hover:text-[#00C3AA] font-medium py-3 border-b border-white/5">หน้าหลัก</a>
+            <a href="portfolio.html" class="text-gray-200 hover:text-[#00C3AA] font-medium py-3 border-b border-white/5">ผลงาน</a>
+            <a href="pricing.html" class="text-gray-200 hover:text-[#00C3AA] font-medium py-3 border-b border-white/5">ราคา</a>
+        </div>
+    </nav>
+
+    <header class="relative pt-48 pb-24 px-6 hero-gradient overflow-hidden">
+        <div class="max-w-5xl mx-auto text-center relative z-10">
+            <div class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#00C3AA]/10 border border-[#00C3AA]/20 text-[#00C3AA] text-xs md:text-sm font-bold mb-10">
+                <i class="fas fa-star"></i> อันดับ 1 บริการขอใบรับรองมาตรฐานร้านอาหาร
+            </div>
+            <h1 class="text-4xl md:text-8xl font-black mb-10 leading-tight tracking-tight">
+                อยากให้ร้านมี <span class="text-[#00C3AA]">"ป้ายรับรอง"</span><br>
+                แต่ไม่รู้จะเริ่มยังไง?
+            </h1>
+            <p class="text-gray-400 max-w-3xl mx-auto text-lg md:text-xl mb-14 leading-relaxed">
+                HygieGo ช่วยคุณเตรียมร้านให้ผ่านเกณฑ์สาธารณสุขง่ายๆ ตั้งแต่ทำความสะอาด จัดระเบียบครัว จนถึงยื่นเอกสาร จบครบในที่เดียว
+            </p>
+            
+            <div class="flex flex-row flex-wrap justify-center gap-4 md:gap-6">
+                <button onclick="location.href='auth/register.html'" class="flex-1 sm:flex-none bg-[#00C3AA] px-8 md:px-12 py-4 md:py-5 rounded-2xl font-bold text-base md:text-xl hover:bg-[#00a892] transition shadow-xl shadow-[#00C3AA]/30">เริ่มต้นใช้งานฟรี</button>
+                <button class="flex-1 sm:flex-none glass-card px-8 md:px-12 py-4 md:py-5 rounded-2xl font-bold text-base md:text-xl hover:bg-white/5 transition">ดูขั้นตอนการทำงาน</button>
+            </div>
+        </div>
+
+        <div class="max-w-4xl mx-auto mt-24 pt-12 border-t border-white/5 flex justify-around md:justify-center md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+            <i class="fas fa-award text-3xl md:text-5xl" title="Certificate Guaranteed"></i>
+            <i class="fas fa-handshake text-3xl md:text-5xl" title="Gov Partner"></i>
+            <i class="fas fa-user-shield text-3xl md:text-5xl" title="Food Safety"></i>
+            <i class="fas fa-store text-3xl md:text-5xl" title="Street Food Standard"></i>
+        </div>
+    </header>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.getElementById('menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuIcon = menuToggle.querySelector('i');
+
+            menuToggle.addEventListener('click', () => {
+                const isHidden = mobileMenu.classList.contains('hidden');
+                
+                if (isHidden) {
+                    mobileMenu.classList.remove('hidden');
+                    mobileMenu.classList.add('flex');
+                    menuIcon.classList.replace('fa-bars', 'fa-times');
+                } else {
+                    mobileMenu.classList.add('hidden');
+                    mobileMenu.classList.remove('flex');
+                    menuIcon.classList.replace('fa-times', 'fa-bars');
+                }
+            });
+
+            const savedUser = JSON.parse(localStorage.getItem('hygieUser'));
+            const role = localStorage.getItem('hygieRole');
+
+            const guestZone = document.getElementById('auth-guest');
+            const userZone = document.getElementById('auth-user');
+            const nameDisplay = document.getElementById('display-user-name');
+            const avatarDisplay = document.getElementById('user-avatar');
+            const dashboardLink = document.getElementById('dashboard-link');
+
+            if (savedUser) {
+                guestZone.classList.add('hidden');
+                userZone.classList.remove('hidden');
+
+                nameDisplay.innerText = savedUser.first_name;
+                avatarDisplay.innerText = savedUser.first_name.charAt(0).toUpperCase();
+
+                if (role === 'admin') {
+                    dashboardLink.href = 'admin/admin-dashboard.html';
+                } else {
+                    dashboardLink.href = 'customer/customer-dashboard.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
